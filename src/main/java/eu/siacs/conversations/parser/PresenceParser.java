@@ -240,7 +240,10 @@ public class PresenceParser extends AbstractParser implements
 			if (pgp != null && x != null) {
 				Element status = packet.findChild("status");
 				String msg = status != null ? status.getContent() : "";
-				contact.setPgpKeyId(pgp.fetchKeyId(account, msg, x.getContent()));
+				long pgpKey = pgp.fetchKeyId(account, msg, x.getContent());
+				if(pgpKey != 0) {
+					contact.setPgpKeyId(pgpKey);
+				}
 			}
 			boolean online = sizeBefore < contact.getPresences().size();
 			mXmppConnectionService.onContactStatusChanged.onContactStatusChanged(contact, online);

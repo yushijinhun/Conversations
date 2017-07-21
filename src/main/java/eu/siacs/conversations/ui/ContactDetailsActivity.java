@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.CompoundButton.OnCheckedChangeListener;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.QuickContactBadge;
@@ -112,6 +113,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 	private CheckBox send;
 	private CheckBox receive;
 	private Button addContactButton;
+	private Button setPgpKeyButton;
 	private Button mShowInactiveDevicesButton;
 	private QuickContactBadge badge;
 	private LinearLayout keys;
@@ -217,6 +219,36 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			@Override
 			public void onClick(View view) {
 				showAddToRosterDialog(contact);
+			}
+		});
+		setPgpKeyButton = (Button) findViewById(R.id.set_pgp_key_button);
+		setPgpKeyButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				final EditText text=new EditText(ContactDetailsActivity.this);
+				text.setText(String.valueOf(contact.getPgpKeyId()));
+				new AlertDialog.Builder(ContactDetailsActivity.this)
+						.setTitle("Modify OpenPGP Key")
+						.setMessage("Input the new OpenPGP key id below (0 for none):")
+						.setView(text)
+						.setPositiveButton("OK",new DialogInterface.OnClickListener(){
+							@Override
+							public void onClick(DialogInterface dialogInterface, int i) {
+								long keyId;
+								try {
+									keyId = Long.parseLong(text.getText().toString());
+								}catch (NumberFormatException e){
+									return;
+								}
+								contact.setPgpKeyId(keyId);
+							}
+						})
+						.setNegativeButton("Cancel",new DialogInterface.OnClickListener(){
+							@Override
+							public void onClick(DialogInterface dialogInterface, int i) {
+							}
+						})
+						.show();
 			}
 		});
 		keys = (LinearLayout) findViewById(R.id.details_contact_keys);
