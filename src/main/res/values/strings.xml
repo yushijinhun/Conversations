@@ -307,7 +307,9 @@
 	<string name="title_activity_about">About Conversations</string>
 	<string name="pref_about_conversations_summary">Build and licensing information</string>
 	<string name="pref_about_message" translatable="false">
-			Conversations • the very last word in instant messaging.
+			The app is modified by yushijinhun.
+			\nSource code: https://github.com/yushijinhun/Conversations
+			\n\nConversations • the very last word in instant messaging.
 			\n\nCopyright © 2014-2017 Daniel Gultsch
 			\n\nThis program is free software: you can redistribute it and/or modify
 			it under the terms of the GNU General Public License as published by

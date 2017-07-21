@@ -59,7 +59,7 @@ android {
         versionCode 227
         versionName "1.19.4"
         archivesBaseName += "-$versionName"
-        applicationId "eu.siacs.conversations"
+        applicationId "org.to2mbn.conversations"
     }
 
     dexOptions {
