@@ -603,7 +603,7 @@ public class ConversationActivity extends XmppActivity
 					if (!conversation.getMucOptions().everybodyHasKeys()) {
 						Toast warning = Toast
 								.makeText(this,
-										R.string.missing_public_keys,
+										ConversationFragment.generateMissingKeyWarning(conversation.getMucOptions()),
 										Toast.LENGTH_LONG);
 						warning.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
 						warning.show();

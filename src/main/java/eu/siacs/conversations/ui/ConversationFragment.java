@@ -1482,7 +1482,7 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 				if (!conversation.getMucOptions().everybodyHasKeys()) {
 					Toast warning = Toast
 							.makeText(getActivity(),
-									R.string.missing_public_keys,
+									generateMissingKeyWarning(conversation.getMucOptions()),
 									Toast.LENGTH_LONG);
 					warning.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
 					warning.show();
@@ -1505,6 +1505,20 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 						});
 			}
 		}
+	}
+
+	public static String generateMissingKeyWarning(MucOptions mucOptions){
+		StringBuilder sb=new StringBuilder("Missing public key announcements: ");
+		boolean first=true;
+		for(MucOptions.User user:mucOptions.getMissingKeyUsers()) {
+			if(first){
+				first=false;
+			}else{
+				sb.append(", ");
+			}
+			sb.append(user.getName());
+		}
+		return sb.toString();
 	}
 
 	public void showNoPGPKeyDialog(boolean plural,

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -701,6 +702,18 @@ public class MucOptions {
 			}
 		}
 		return true;
+	}
+
+	public Set<User> getMissingKeyUsers(){
+		Set<User> missing=new LinkedHashSet<>();
+		synchronized (users) {
+			for (User user : users) {
+				if (user.getPgpKeyId() == 0) {
+					missing.add(user);
+				}
+			}
+		}
+		return missing;
 	}
 
 	public Jid createJoinJid(String nick) {
