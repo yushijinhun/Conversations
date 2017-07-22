@@ -85,11 +85,11 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
 		}
 
 		@Override
-		public void error(final int errorCode, Conversation object) {
+		public void error(final String error, Conversation object) {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					Toast.makeText(ConferenceDetailsActivity.this,getString(errorCode),Toast.LENGTH_SHORT).show();
+					Toast.makeText(ConferenceDetailsActivity.this,error,Toast.LENGTH_SHORT).show();
 				}
 			});
 		}

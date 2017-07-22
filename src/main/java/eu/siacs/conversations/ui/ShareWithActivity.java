@@ -104,11 +104,11 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
 		}
 
 		@Override
-		public void error(final int errorCode, Message object) {
+		public void error(final String error, Message object) {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					replaceToast(getString(errorCode));
+					replaceToast(error);
 					if (attachmentCounter.decrementAndGet() <=0 ) {
 						finish();
 					}
@@ -339,11 +339,11 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
 						}
 
 						@Override
-						public void error(final int errorCode, Message object) {
+						public void error(final String error, Message object) {
 							runOnUiThread(new Runnable() {
 								@Override
 								public void run() {
-									replaceToast(getString(errorCode));
+									replaceToast(error);
 									finish();
 								}
 							});

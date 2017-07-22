@@ -413,9 +413,7 @@ public class XmppConnectionService extends Service {
 			return null;
 		} else if (pgpServiceConnection != null && pgpServiceConnection.isBound()) {
 			if (this.mPgpEngine == null) {
-				this.mPgpEngine = new PgpEngine(new OpenPgpApi(
-						getApplicationContext(),
-						pgpServiceConnection.getService()), this);
+				this.mPgpEngine = new PgpEngine(this);
 			}
 			return mPgpEngine;
 		} else {
@@ -465,7 +463,7 @@ public class XmppConnectionService extends Service {
 										 final UiCallback<Message> callback) {
 		if (FileBackend.weOwnFile(this, uri)) {
 			Log.d(Config.LOGTAG,"trying to attach file that belonged to us");
-			callback.error(R.string.security_error_invalid_file_access, null);
+			callback.error(getString(R.string.security_error_invalid_file_access), null);
 			return;
 		}
 		final Message message;
@@ -497,13 +495,13 @@ public class XmppConnectionService extends Service {
 							if (pgpEngine != null) {
 								pgpEngine.encrypt(message, callback);
 							} else if (callback != null) {
-								callback.error(R.string.unable_to_connect_to_keychain, null);
+								callback.error(getString(R.string.unable_to_connect_to_keychain), null);
 							}
 						} else {
 							callback.success(message);
 						}
 					} catch (FileBackend.FileCopyException e) {
-						callback.error(e.getResId(), message);
+						callback.error(getString(e.getResId()), message);
 					}
 				}
 			}
@@ -579,7 +577,7 @@ public class XmppConnectionService extends Service {
 	public void attachImageToConversation(final Conversation conversation, final Uri uri, final UiCallback<Message> callback) {
 		if (FileBackend.weOwnFile(this, uri)) {
 			Log.d(Config.LOGTAG,"trying to attach file that belonged to us");
-			callback.error(R.string.security_error_invalid_file_access, null);
+			callback.error(getString(R.string.security_error_invalid_file_access), null);
 			return;
 		}
 
@@ -612,13 +610,13 @@ public class XmppConnectionService extends Service {
 						if (pgpEngine != null) {
 							pgpEngine.encrypt(message, callback);
 						} else if (callback != null){
-							callback.error(R.string.unable_to_connect_to_keychain, null);
+							callback.error(getString(R.string.unable_to_connect_to_keychain), null);
 						}
 					} else {
 						callback.success(message);
 					}
 				} catch (final FileBackend.FileCopyException e) {
-					callback.error(e.getResId(), message);
+					callback.error(getString(e.getResId()), message);
 				}
 			}
 		});
@@ -843,7 +841,7 @@ public class XmppConnectionService extends Service {
 				}
 
 				@Override
-				public void error(int errorCode, Message object) {
+				public void error(String error, Message object) {
 
 				}
 
@@ -2416,7 +2414,7 @@ public class XmppConnectionService extends Service {
 
 				@Override
 				public void onFailure() {
-					callback.error(R.string.nick_in_use, conversation);
+					callback.error(getString(R.string.nick_in_use), conversation);
 				}
 			});
 
@@ -2496,7 +2494,7 @@ public class XmppConnectionService extends Service {
 				String server = findConferenceServer(account);
 				if (server == null) {
 					if (callback != null) {
-						callback.error(R.string.no_conference_server_found, null);
+						callback.error(getString(R.string.no_conference_server_found), null);
 					}
 					return false;
 				}
@@ -2527,7 +2525,7 @@ public class XmppConnectionService extends Service {
 							public void onPushFailed() {
 								archiveConversation(conversation);
 								if (callback != null) {
-									callback.error(R.string.conference_creation_failed, conversation);
+									callback.error(getString(R.string.conference_creation_failed), conversation);
 								}
 							}
 						});
@@ -2536,13 +2534,13 @@ public class XmppConnectionService extends Service {
 				return true;
 			} catch (InvalidJidException e) {
 				if (callback != null) {
-					callback.error(R.string.conference_creation_failed, null);
+					callback.error(getString(R.string.conference_creation_failed), null);
 				}
 				return false;
 			}
 		} else {
 			if (callback != null) {
-				callback.error(R.string.not_connected_try_again, null);
+				callback.error(getString(R.string.not_connected_try_again), null);
 			}
 			return false;
 		}
@@ -2871,12 +2869,12 @@ public class XmppConnectionService extends Service {
 				avatar.type = "image/png";
 			}
 			if (!getFileBackend().save(avatar)) {
-				callback.error(R.string.error_saving_avatar, avatar);
+				callback.error(getString(R.string.error_saving_avatar), avatar);
 				return;
 			}
 			publishAvatar(account, avatar, callback);
 		} else {
-			callback.error(R.string.error_publish_avatar_converting, null);
+			callback.error(getString(R.string.error_publish_avatar_converting), null);
 		}
 	}
 
@@ -2902,7 +2900,7 @@ public class XmppConnectionService extends Service {
 								}
 							} else {
 								if (callback != null) {
-									callback.error(R.string.error_publish_avatar_server_reject,avatar);
+									callback.error(getString(R.string.error_publish_avatar_server_reject), avatar);
 								}
 							}
 						}
@@ -2911,7 +2909,7 @@ public class XmppConnectionService extends Service {
 					Element error = result.findChild("error");
 					Log.d(Config.LOGTAG,account.getJid().toBareJid()+": server rejected avatar "+(avatar.size/1024)+"KiB "+(error!=null?error.toString():""));
 					if (callback != null) {
-						callback.error(R.string.error_publish_avatar_server_reject, avatar);
+						callback.error(getString(R.string.error_publish_avatar_server_reject), avatar);
 					}
 				}
 			}
@@ -3034,7 +3032,7 @@ public class XmppConnectionService extends Service {
 					}
 				}
 				if (callback != null) {
-					callback.error(0, null);
+					callback.error("", null);
 				}
 
 			}
@@ -3120,7 +3118,7 @@ public class XmppConnectionService extends Service {
 						}
 					}
 				}
-				callback.error(0, null);
+				callback.error("", null);
 			}
 		});
 	}

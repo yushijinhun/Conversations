@@ -75,12 +75,12 @@ public class PublishProfilePictureActivity extends XmppActivity {
 		}
 
 		@Override
-		public void error(final int errorCode, Avatar object) {
+		public void error(final String error, Avatar object) {
 			runOnUiThread(new Runnable() {
 
 				@Override
 				public void run() {
-					hintOrWarning.setText(errorCode);
+					hintOrWarning.setText(error);
 					hintOrWarning.setTextColor(getWarningTextColor());
 					publishButton.setText(R.string.publish);
 					enablePublishButton();

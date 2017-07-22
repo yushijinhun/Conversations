@@ -221,11 +221,11 @@ public class StartConversationActivity extends XmppActivity implements OnRosterU
         }
 
         @Override
-        public void error(final int errorCode, Conversation object) {
+        public void error(final String error, Conversation object) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    replaceToast(getString(errorCode));
+                    replaceToast(error);
                 }
             });
         }

@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -264,7 +263,7 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
                             0,
                             0);
 				} catch (SendIntentException e) {
-					Toast.makeText(activity,R.string.unable_to_connect_to_keychain, Toast.LENGTH_SHORT).show();
+					Toast.makeText(activity,e.getMessage(), Toast.LENGTH_SHORT).show();
 					conversation.getAccount().getPgpDecryptionService().continueDecryption(true);
 				}
 			}
@@ -1447,12 +1446,12 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 							}
 
 							@Override
-							public void error(int error, Contact contact) {
+							public void error(final String error, Contact contact) {
 								activity.runOnUiThread(new Runnable() {
 									@Override
 									public void run() {
 										Toast.makeText(activity,
-												R.string.unable_to_connect_to_keychain,
+												error,
 												Toast.LENGTH_SHORT
 										).show();
 									}
@@ -1487,6 +1486,7 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 					warning.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
 					warning.show();
 				}
+
 				activity.encryptTextMessage(message);
 			} else {
 				showNoPGPKeyDialog(true,
@@ -1516,12 +1516,7 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 			}else{
 				sb.append(", ");
 			}
-			Contact contact=user.getContact();
-			if(contact==null){
-				sb.append(user);
-			}else{
-				sb.append(contact.getDisplayName());
-			}
+			sb.append(user.getContact().getDisplayName());
 		}
 		return sb.toString();
 	}

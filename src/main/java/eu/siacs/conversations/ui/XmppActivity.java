@@ -579,8 +579,8 @@ public abstract class XmppActivity extends Activity {
 				}
 
 				@Override
-				public void error(int error, Account account) {
-					if (error == 0 && account != null) {
+				public void error(String error, Account account) {
+					if (error.isEmpty() && account != null) {
 						account.setPgpSignId(0);
 						account.unsetPgpSignature();
 						xmppConnectionService.databaseBackend.updateAccount(account);
@@ -623,7 +623,7 @@ public abstract class XmppActivity extends Activity {
 			}
 
 			@Override
-			public void error(int errorCode, Account object) {
+			public void error(String error, Account object) {
 
 			}
 
@@ -638,7 +638,7 @@ public abstract class XmppActivity extends Activity {
 		});
 	}
 
-	protected void displayErrorDialog(final int errorCode) {
+	protected void displayErrorDialog(final String error) {
 		runOnUiThread(new Runnable() {
 
 			@Override
@@ -647,7 +647,7 @@ public abstract class XmppActivity extends Activity {
 						XmppActivity.this);
 				builder.setIconAttribute(android.R.attr.alertDialogIcon);
 				builder.setTitle(getString(R.string.error));
-				builder.setMessage(errorCode);
+				builder.setMessage(error);
 				builder.setNeutralButton(R.string.accept, null);
 				builder.create().show();
 			}
@@ -908,11 +908,11 @@ public abstract class XmppActivity extends Activity {
 		}
 
 		@Override
-		public void error(final int errorCode, Conversation object) {
+		public void error(final String error, Conversation object) {
 			runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					replaceToast(getString(errorCode));
+					replaceToast(error);
 				}
 			});
 		}

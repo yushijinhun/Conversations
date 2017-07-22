@@ -1,7 +1,10 @@
 package eu.siacs.conversations.crypto;
 
+import android.annotation.TargetApi;
 import android.app.PendingIntent;
 import android.content.Intent;
+import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 
 import org.openintents.openpgp.OpenPgpError;
@@ -29,11 +32,9 @@ import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.ui.UiCallback;
 
 public class PgpEngine {
-	private OpenPgpApi api;
 	private XmppConnectionService mXmppConnectionService;
 
-	public PgpEngine(OpenPgpApi api, XmppConnectionService service) {
-		this.api = api;
+	public PgpEngine(XmppConnectionService service) {
 		this.mXmppConnectionService = service;
 	}
 
@@ -61,7 +62,7 @@ public class PgpEngine {
 			}
 			InputStream is = new ByteArrayInputStream(body.getBytes());
 			final OutputStream os = new ByteArrayOutputStream();
-			api.executeApiAsync(params, is, os, new IOpenPgpCallback() {
+			getOpenPgpApi().executeApiAsync(params, is, os, new IOpenPgpCallback() {
 
 				@Override
 				public void onReturn(Intent result) {
@@ -81,7 +82,7 @@ public class PgpEngine {
 									.toString());
 							callback.success(message);
 						} catch (IOException e) {
-							callback.error(R.string.openpgp_error, message);
+							callback.error(e.getMessage(), message);
 						}
 
 						break;
@@ -91,8 +92,7 @@ public class PgpEngine {
 								message);
 						break;
 					case OpenPgpApi.RESULT_CODE_ERROR:
-						logError(conversation.getAccount(), (OpenPgpError) result.getParcelableExtra(OpenPgpApi.RESULT_ERROR));
-						callback.error(R.string.openpgp_error, message);
+						callback.error(logError(conversation.getAccount(), result), message);
 						break;
 					}
 				}
@@ -107,7 +107,7 @@ public class PgpEngine {
 				outputFile.createNewFile();
 				final InputStream is = new FileInputStream(inputFile);
 				final OutputStream os = new FileOutputStream(outputFile);
-				api.executeApiAsync(params, is, os, new IOpenPgpCallback() {
+				getOpenPgpApi().executeApiAsync(params, is, os, new IOpenPgpCallback() {
 
 					@Override
 					public void onReturn(Intent result) {
@@ -129,20 +129,20 @@ public class PgpEngine {
 									message);
 							break;
 						case OpenPgpApi.RESULT_CODE_ERROR:
-							logError(conversation.getAccount(), (OpenPgpError) result.getParcelableExtra(OpenPgpApi.RESULT_ERROR));
-							callback.error(R.string.openpgp_error, message);
+							callback.error(logError(conversation.getAccount(), result), message);
 							break;
 						}
 					}
 				});
 			} catch (final IOException e) {
-				callback.error(R.string.openpgp_error, message);
+				callback.error(e.getMessage(), message);
 			}
 		}
 	}
 
 	public long fetchKeyId(Account account, String status, String signature) {
-		if ((signature == null) || (api == null)) {
+		OpenPgpApi api=getOpenPgpApi();
+		if (signature == null||api==null) {
 			return 0;
 		}
 		if (status == null) {
@@ -188,7 +188,7 @@ public class PgpEngine {
 	public void chooseKey(final Account account, final UiCallback<Account> callback) {
 		Intent p = new Intent();
 		p.setAction(OpenPgpApi.ACTION_GET_SIGN_KEY_ID);
-		api.executeApiAsync(p, null, null, new IOpenPgpCallback() {
+		getOpenPgpApi().executeApiAsync(p, null, null, new IOpenPgpCallback() {
 
 			@Override
 			public void onReturn(Intent result) {
@@ -202,8 +202,7 @@ public class PgpEngine {
 								account);
 						return;
 					case OpenPgpApi.RESULT_CODE_ERROR:
-						logError(account, (OpenPgpError) result.getParcelableExtra(OpenPgpApi.RESULT_ERROR));
-						callback.error(R.string.openpgp_error, account);
+						callback.error(logError(account, result), account);
 				}
 			}
 		});
@@ -221,7 +220,7 @@ public class PgpEngine {
 		InputStream is = new ByteArrayInputStream(status.getBytes());
 		final OutputStream os = new ByteArrayOutputStream();
 		Log.d(Config.LOGTAG,account.getJid().toBareJid()+": signing status message \""+status+"\"");
-		api.executeApiAsync(params, is, os, new IOpenPgpCallback() {
+		getOpenPgpApi().executeApiAsync(params, is, os, new IOpenPgpCallback() {
 
 			@Override
 			public void onReturn(Intent result) {
@@ -247,7 +246,7 @@ public class PgpEngine {
 							}
 						}
 					} catch (IOException e) {
-						callback.error(R.string.openpgp_error, account);
+						callback.error(e.getMessage(), account);
 						return;
 					}
 					account.setPgpSignature(signatureBuilder.toString());
@@ -261,10 +260,9 @@ public class PgpEngine {
 				case OpenPgpApi.RESULT_CODE_ERROR:
 					OpenPgpError error = result.getParcelableExtra(OpenPgpApi.RESULT_ERROR);
 					if (error != null && "signing subkey not found!".equals(error.getMessage())) {
-						callback.error(0,account);
+						callback.error("",account);
 					} else {
-						logError(account, error);
-						callback.error(R.string.unable_to_connect_to_keychain, null);
+						callback.error(logError(account, error), null);
 					}
                 }
 			}
@@ -275,7 +273,7 @@ public class PgpEngine {
 		Intent params = new Intent();
 		params.setAction(OpenPgpApi.ACTION_GET_KEY);
 		params.putExtra(OpenPgpApi.EXTRA_KEY_ID, contact.getPgpKeyId());
-		api.executeApiAsync(params, null, null, new IOpenPgpCallback() {
+		getOpenPgpApi().executeApiAsync(params, null, null, new IOpenPgpCallback() {
 
 			@Override
 			public void onReturn(Intent result) {
@@ -289,18 +287,24 @@ public class PgpEngine {
 							contact);
 					return;
 				case OpenPgpApi.RESULT_CODE_ERROR:
-					logError(contact.getAccount(), (OpenPgpError) result.getParcelableExtra(OpenPgpApi.RESULT_ERROR));
-					callback.error(R.string.openpgp_error, contact);
+					callback.error(logError(contact.getAccount(), result), contact);
                 }
 			}
 		});
 	}
 
-	private static void logError(Account account, OpenPgpError error) {
+	private static String logError(Account account, Intent intent) {
+		return logError(account, (OpenPgpError) intent.getParcelableExtra(OpenPgpApi.RESULT_ERROR));
+	}
+
+	private static String logError(Account account, OpenPgpError error) {
 		if (error != null) {
 			Log.d(Config.LOGTAG,account.getJid().toBareJid().toString()+": OpenKeychain error '"+error.getMessage()+"' code="+error.getErrorId());
+			String msg=error.getMessage();
+			return msg==null||msg.trim().isEmpty()?"OpenKeychain error":msg;
 		} else {
 			Log.d(Config.LOGTAG,account.getJid().toBareJid().toString()+": OpenKeychain error with no message");
+			return "OpenKeychain error";
 		}
 	}
 
@@ -309,7 +313,11 @@ public class PgpEngine {
 		Intent params = new Intent();
 		params.setAction(OpenPgpApi.ACTION_GET_KEY);
 		params.putExtra(OpenPgpApi.EXTRA_KEY_ID, pgpKeyId);
-		Intent result = api.executeApi(params, null, null);
+		Intent result = getOpenPgpApi().executeApi(params, null, null);
 		return (PendingIntent) result.getParcelableExtra(OpenPgpApi.RESULT_INTENT);
+	}
+
+	private OpenPgpApi getOpenPgpApi() {
+		return mXmppConnectionService.getOpenPgpApi();
 	}
 }

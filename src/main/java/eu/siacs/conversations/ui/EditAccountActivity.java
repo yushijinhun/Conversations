@@ -338,7 +338,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
 		}
 
 		@Override
-		public void error(final int errorCode, final Avatar avatar) {
+		public void error(final String errorCode, final Avatar avatar) {
 			finishInitialSetup(avatar);
 		}
 	};

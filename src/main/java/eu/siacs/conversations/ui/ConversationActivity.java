@@ -595,8 +595,8 @@ public class ConversationActivity extends XmppActivity
 								}
 
 								@Override
-								public void error(int error, Contact contact) {
-									replaceToast(getString(error));
+								public void error(String error, Contact contact) {
+									replaceToast(error);
 								}
 							});
 				} else if (mode == Conversation.MODE_MULTI && conversation.getMucOptions().pgpKeysInUse()) {
@@ -1543,7 +1543,7 @@ public class ConversationActivity extends XmppActivity
 			}
 
 			@Override
-			public void error(int errorCode, Message object) {
+			public void error(String error, Message object) {
 
 			}
 
@@ -1585,12 +1585,12 @@ public class ConversationActivity extends XmppActivity
 			}
 
 			@Override
-			public void error(final int errorCode, Message message) {
+			public void error(final String error, Message message) {
 				hidePrepareFileToast(prepareFileToast);
 				runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
-						replaceToast(getString(errorCode));
+						replaceToast(error);
 					}
 				});
 
@@ -1628,12 +1628,12 @@ public class ConversationActivity extends XmppActivity
 					}
 
 					@Override
-					public void error(final int error, Message message) {
+					public void error(final String error, Message message) {
 						hidePrepareFileToast(prepareFileToast);
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
-								replaceToast(getString(error));
+								replaceToast(error);
 							}
 						});
 					}
@@ -1697,13 +1697,13 @@ public class ConversationActivity extends XmppActivity
 					}
 
 					@Override
-					public void error(final int error, Message message) {
+					public void error(final String error, Message message) {
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
 								mConversationFragment.doneSendingPgpMessage();
 								Toast.makeText(ConversationActivity.this,
-										R.string.unable_to_connect_to_keychain,
+										error,
 										Toast.LENGTH_SHORT
 								).show();
 							}
