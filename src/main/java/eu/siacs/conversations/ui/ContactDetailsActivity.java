@@ -657,9 +657,15 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 		}else if(keys.length>1){
 			Toast.makeText(ContactDetailsActivity.this,"You can only select one key",Toast.LENGTH_SHORT).show();
 		}else{
+			long oldkey=contact.getPgpKeyId();
 			contact.setPgpKeyId(keys[0]);
-			Toast.makeText(ContactDetailsActivity.this,"Set key to: "+OpenPgpUtils.convertKeyIdToHex(keys[0]),Toast.LENGTH_SHORT).show();
+			if(oldkey==keys[0]){
+				Toast.makeText(ContactDetailsActivity.this, "Key isn't changed: " + OpenPgpUtils.convertKeyIdToHex(keys[0]), Toast.LENGTH_SHORT).show();
+			}else {
+				Toast.makeText(ContactDetailsActivity.this, "Set key to: " + OpenPgpUtils.convertKeyIdToHex(keys[0]), Toast.LENGTH_SHORT).show();
+			}
 			refreshUi();
+			xmppConnectionService.syncRosterToDisk(contact.getAccount());
 		}
 	}
 
