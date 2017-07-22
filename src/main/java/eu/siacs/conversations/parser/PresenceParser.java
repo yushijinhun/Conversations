@@ -91,17 +91,6 @@ public class PresenceParser extends AbstractParser implements
 									IqGenerator.defaultRoomConfiguration(),
 									null);
 						}
-						if (mXmppConnectionService.getPgpEngine() != null) {
-							Element signed = packet.findChild("x", "jabber:x:signed");
-							if (signed != null) {
-								Element status = packet.findChild("status");
-								String msg = status == null ? "" : status.getContent();
-								long keyId = mXmppConnectionService.getPgpEngine().fetchKeyId(mucOptions.getAccount(), msg, signed.getContent());
-								if (keyId != 0) {
-									user.setPgpKeyId(keyId);
-								}
-							}
-						}
 						if (avatar != null) {
 							avatar.owner = from;
 							if (mXmppConnectionService.getFileBackend().isAvatarCached(avatar)) {
@@ -235,16 +224,6 @@ public class PresenceParser extends AbstractParser implements
 				}
 			}
 
-			PgpEngine pgp = mXmppConnectionService.getPgpEngine();
-			Element x = packet.findChild("x", "jabber:x:signed");
-			if (pgp != null && x != null) {
-				Element status = packet.findChild("status");
-				String msg = status != null ? status.getContent() : "";
-				long pgpKey = pgp.fetchKeyId(account, msg, x.getContent());
-				if(pgpKey != 0) {
-					contact.setPgpKeyId(pgpKey);
-				}
-			}
 			boolean online = sizeBefore < contact.getPresences().size();
 			mXmppConnectionService.onContactStatusChanged.onContactStatusChanged(contact, online);
 		} else if (type.equals("unavailable")) {

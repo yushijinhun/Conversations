@@ -1,17 +1,21 @@
 package eu.siacs.conversations.ui;
 
 import android.app.AlertDialog;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.ContactsContract.CommonDataKinds;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Intents;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,8 +34,11 @@ import android.widget.Toast;
 
 import com.wefika.flowlayout.FlowLayout;
 
+import org.openintents.openpgp.OpenPgpError;
+import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpUtils;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import eu.siacs.conversations.Config;
@@ -56,6 +63,8 @@ import eu.siacs.conversations.xmpp.jid.Jid;
 
 public class ContactDetailsActivity extends OmemoActivity implements OnAccountUpdate, OnRosterUpdate, OnUpdateBlocklist, OnKeyStatusUpdated {
 	public static final String ACTION_VIEW_CONTACT = "view_contact";
+
+	public  static final int REQUEST_CHOOSE_PGP_KEY=0x2333;
 
 	private Contact contact;
 	private DialogInterface.OnClickListener removeFromRoster = new DialogInterface.OnClickListener() {
@@ -224,31 +233,8 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 		setPgpKeyButton = (Button) findViewById(R.id.set_pgp_key_button);
 		setPgpKeyButton.setOnClickListener(new OnClickListener() {
 			@Override
-			public void onClick(View view) {
-				final EditText text=new EditText(ContactDetailsActivity.this);
-				text.setText(String.valueOf(contact.getPgpKeyId()));
-				new AlertDialog.Builder(ContactDetailsActivity.this)
-						.setTitle("Modify OpenPGP Key")
-						.setMessage("Input the new OpenPGP key id below (0 for none):")
-						.setView(text)
-						.setPositiveButton("OK",new DialogInterface.OnClickListener(){
-							@Override
-							public void onClick(DialogInterface dialogInterface, int i) {
-								long keyId;
-								try {
-									keyId = Long.parseLong(text.getText().toString());
-								}catch (NumberFormatException e){
-									return;
-								}
-								contact.setPgpKeyId(keyId);
-							}
-						})
-						.setNegativeButton("Cancel",new DialogInterface.OnClickListener(){
-							@Override
-							public void onClick(DialogInterface dialogInterface, int i) {
-							}
-						})
-						.show();
+			public void onClick(View v) {
+				selectPgpKey();
 			}
 		});
 		keys = (LinearLayout) findViewById(R.id.details_contact_keys);
@@ -611,6 +597,77 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			}
 		} else {
 			Toast.makeText(this,R.string.invalid_barcode,Toast.LENGTH_SHORT).show();
+		}
+	}
+
+	private void selectPgpKey(){
+		if(contact==null)return;
+		if(xmppConnectionService==null)return;
+		OpenPgpApi pgp=xmppConnectionService.getOpenPgpApi();
+		if(pgp==null)return;
+		Intent params=new Intent();
+		params.setAction(OpenPgpApi.ACTION_GET_KEY_IDS);
+		pgp.executeApiAsync(params, null, null, new OpenPgpApi.IOpenPgpCallback() {
+			@Override
+			public void onReturn(final Intent result) {
+				switch (result.getIntExtra(OpenPgpApi.RESULT_CODE,OpenPgpApi.RESULT_CODE_ERROR)){
+					case OpenPgpApi.RESULT_CODE_SUCCESS:
+						break;
+					case OpenPgpApi.RESULT_CODE_USER_INTERACTION_REQUIRED:
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+									try {
+										startIntentSenderForResult(((PendingIntent) result.getParcelableExtra(OpenPgpApi.RESULT_INTENT)).getIntentSender(), REQUEST_CHOOSE_PGP_KEY, null, 0, 0, 0);
+									} catch (IntentSender.SendIntentException e) {
+										Log.e(Config.LOGTAG,"SendIntentException",e);
+									}
+								}
+							}
+						});
+						break;
+					case OpenPgpApi.RESULT_CODE_ERROR:
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								Toast.makeText(ContactDetailsActivity.this,pgpErrorToString((OpenPgpError) result.getParcelableExtra(OpenPgpApi.RESULT_ERROR)),Toast.LENGTH_SHORT).show();
+							}
+						});
+						break;
+				}
+			}
+		});
+	}
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+		if(requestCode==REQUEST_CHOOSE_PGP_KEY){
+			if(resultCode==RESULT_OK){
+				setPgpKey(intent.getLongArrayExtra("key_ids_selected"));
+			}
+		}else {
+			super.onActivityResult(requestCode, resultCode, intent);
+		}
+	}
+
+	private void setPgpKey(long[] keys){
+		if(keys==null||keys.length==0){
+			Toast.makeText(ContactDetailsActivity.this,"No key is selected",Toast.LENGTH_SHORT).show();
+		}else if(keys.length>1){
+			Toast.makeText(ContactDetailsActivity.this,"You can only select one key",Toast.LENGTH_SHORT).show();
+		}else{
+			contact.setPgpKeyId(keys[0]);
+			Toast.makeText(ContactDetailsActivity.this,"Set key to: "+OpenPgpUtils.convertKeyIdToHex(keys[0]),Toast.LENGTH_SHORT).show();
+			refreshUi();
+		}
+	}
+
+	private static String pgpErrorToString(OpenPgpError error) {
+		if (error != null) {
+			return "OpenKeychain error '"+error.getMessage()+"' code="+error.getErrorId();
+		} else {
+			return "OpenKeychain error with no message";
 		}
 	}
 }

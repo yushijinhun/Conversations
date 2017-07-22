@@ -1516,7 +1516,12 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 			}else{
 				sb.append(", ");
 			}
-			sb.append(user.getName());
+			Contact contact=user.getContact();
+			if(contact==null){
+				sb.append(user);
+			}else{
+				sb.append(contact.getDisplayName());
+			}
 		}
 		return sb.toString();
 	}
