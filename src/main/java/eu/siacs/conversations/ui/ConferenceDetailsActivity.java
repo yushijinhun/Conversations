@@ -69,7 +69,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
 	private String uuid = null;
 	private User mSelectedUser = null;
 
-	private boolean mAdvancedMode = false;
+	private boolean mAdvancedMode = true;
 
 	private UiCallback<Conversation> renameCallback = new UiCallback<Conversation>() {
 		@Override
@@ -378,9 +378,7 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
 				MenuItem banFromConference = menu.findItem(R.id.ban_from_conference);
 				MenuItem invite = menu.findItem(R.id.invite);
 				startConversation.setVisible(true);
-				if (contact != null) {
-					showContactDetails.setVisible(!contact.isSelf());
-				}
+				showContactDetails.setVisible(contact==null?true:!contact.isSelf());
 				if (user.getRole() == MucOptions.Role.NONE) {
 					invite.setVisible(true);
 				}
@@ -417,9 +415,10 @@ public class ConferenceDetailsActivity extends XmppActivity implements OnConvers
 		switch (item.getItemId()) {
 			case R.id.action_contact_details:
 				Contact contact = mSelectedUser.getContact();
-				if (contact != null) {
-					switchToContactDetails(contact);
+				if (contact == null) {
+					contact=mSelectedUser.getAccount().getRoster().getContact(mSelectedUser.getRealJid());
 				}
+				switchToContactDetails(contact);
 				return true;
 			case R.id.start_conversation:
 				startConversation(mSelectedUser);

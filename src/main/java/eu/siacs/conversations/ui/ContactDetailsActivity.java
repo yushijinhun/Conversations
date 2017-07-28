@@ -234,7 +234,11 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 		setPgpKeyButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				selectPgpKey();
+				if(contact.showInRoster()) {
+					selectPgpKey();
+				} else {
+					showAddToRosterDialog(contact);
+				}
 			}
 		});
 		keys = (LinearLayout) findViewById(R.id.details_contact_keys);
@@ -653,7 +657,10 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 
 	private void setPgpKey(long[] keys){
 		if(keys==null||keys.length==0){
-			Toast.makeText(ContactDetailsActivity.this,"No key is selected",Toast.LENGTH_SHORT).show();
+			contact.setPgpKeyId(0);
+			Toast.makeText(ContactDetailsActivity.this,"Key has been has unset",Toast.LENGTH_SHORT).show();
+			refreshUi();
+			xmppConnectionService.syncRosterToDisk(contact.getAccount());
 		}else if(keys.length>1){
 			Toast.makeText(ContactDetailsActivity.this,"You can only select one key",Toast.LENGTH_SHORT).show();
 		}else{
